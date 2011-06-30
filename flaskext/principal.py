@@ -5,7 +5,8 @@
 
     Identity management for Flask.
 
-    :copyright: (c) 2010 by Ali Afshar.
+    :copyright: (c) 2010-2011 by Ali Afshar.
+    :copyright: (c) 2011 by Alfred Hall.
     :license: MIT, see LICENSE for more details.
 
 """
