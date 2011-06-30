@@ -25,14 +25,14 @@ signals = Namespace()
 """
 
 
-identity_changed = signals.signal('identity-changed', doc=
+identity_changed = signals.signal('identity-changed', doc=(
 """Signal sent when the identity for a request has been changed.
 
 Actual name: ``identity-changed``
 
 Authentication providers should send this signal when authentication has been
-successfully performed. Flask-IdentityContext connects to this signal and causes the
-identity to be saved in the session.
+successfully performed. Flask-IdentityContext connects to this signal and
+causes the identity to be saved in the session.
 
 For example::
 
@@ -42,10 +42,10 @@ For example::
         username = req.form.get('username')
         # check the credentials
         identity_changed.send(app, identity=Identity(username))
-""")
+"""))
 
 
-identity_loaded = signals.signal('identity-loaded', doc=
+identity_loaded = signals.signal('identity-loaded', doc=(
 """Signal sent when the identity has been initialised for a request.
 
 Actual name: ``identity-loaded``
@@ -53,7 +53,8 @@ Actual name: ``identity-loaded``
 Identity information providers should connect to this signal to perform two
 major activities:
 
-    1. Populate the identity object with the necessary authorization provisions.
+    1. Populate the identity object with the necessary authorization
+       provisions.
     2. Load any additional user information.
 
 For example::
@@ -69,7 +70,7 @@ For example::
             identity.provides.add(RoleNeed(role.name))
         # Save the user somewhere so we only look it up once
         identity.user = user
-""")
+"""))
 
 
 Need = namedtuple('Need', ['method', 'value'])
@@ -117,6 +118,7 @@ are.
 class PermissionDenied(RuntimeError):
     """Permission denied to the resource
     """
+
 
 class Identity(object):
     """Represent the user's identity.
@@ -169,12 +171,13 @@ class AnonymousIdentity(Identity):
 class IdentityContext(object):
     """The context of an identity for a permission.
 
-    .. note:: The principal is usually created by the flaskext.Permission.require method
-              call for normal use-cases.
+    .. note:: The principal is usually created by the
+              flaskext.Permission.require method call for normal use-cases.
 
     The principal behaves as either a context manager or a decorator. The
     permission is checked for provision in the identity, and if available the
-    flow is continued (context manager) or the function is executed (decorator).
+    flow is continued (context manager) or the function is executed
+    (decorator).
     """
 
     def __init__(self, permission, http_exception=None):
@@ -217,7 +220,7 @@ class IdentityContext(object):
     def __exit__(self, *exc):
         if exc != (None, None, None):
             cls, val, tb = exc
-            raise cls, val, tb
+            raise(cls, val, tb)
         return False
 
 
@@ -243,7 +246,7 @@ class Permission(object):
         """Does the same thing as ``self.union(other)``
         """
         return self.union(other)
-    
+
     def __or__(self, other):
         """Does the same thing as ``self.difference(other)``
         """
@@ -261,7 +264,7 @@ class Permission(object):
 
         If ``http_exception`` is passed then ``abort()`` will be called
         with the HTTP exception code. Otherwise a ``PermissionDenied``
-        exception will be raised if the identity does not meet the 
+        exception will be raised if the identity does not meet the
         requirements.
 
         :param http_exception: the HTTP exception code (403, 401 etc)
@@ -270,7 +273,7 @@ class Permission(object):
 
     def test(self, http_exception=None):
         """
-        Checks if permission available and raises relevant exception 
+        Checks if permission available and raises relevant exception
         if not. This is useful if you just want to check permission
         without wrapping everything in a require() block.
 
@@ -282,10 +285,10 @@ class Permission(object):
 
         with self.require(http_exception):
             pass
-        
+
     def reverse(self):
         """
-        Returns reverse of current state (needs->excludes, excludes->needs) 
+        Returns reverse of current state (needs->excludes, excludes->needs)
         """
 
         p = Permission()
@@ -304,7 +307,7 @@ class Permission(object):
         return p
 
     def difference(self, other):
-        """Create a new permission consisting of requirements in this 
+        """Create a new permission consisting of requirements in this
         permission and not in the other.
         """
 
@@ -332,7 +335,7 @@ class Permission(object):
             return False
 
         return True
-       
+
     def can(self):
         """Whether the required context for this permission has access
 
@@ -450,4 +453,3 @@ class Principal(object):
             if identity is not None:
                 self.set_identity(identity)
                 return
-
