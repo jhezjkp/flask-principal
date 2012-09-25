@@ -6,6 +6,7 @@ flaskext-principal演示程序
 适用于原版的flaskext-principal
 '''
 
+import os
 import sys
 try:
     #在没有安装flaskext-principal只下载了我fork的项目源码的情况下需要这
@@ -15,14 +16,14 @@ except:
     pass
 import datetime
 
-from flask import Flask, app, Response, session, request, redirect, url_for
+from flask import Flask, Response, session, request, redirect, url_for
 from flaskext.principal import Principal, Permission, RoleNeed, ActionNeed, PermissionDenied, identity_changed, identity_loaded, Identity
 
 app = Flask(__name__)
 #配置app参数
 app.config.update(
-        #使用session必须要配置secret key,请尽可能地设置得复杂些
-        SECRET_KEY = 'vivia.me'
+    #使用session必须要配置secret key
+    SECRET_KEY=os.urandom(32).encode('hex')
 )
 #集成principal支持
 principal = Principal(app)
@@ -33,17 +34,19 @@ loginPermission = Permission(RoleNeed('loginUser'))
 #配置某角色权限
 adminRolePermission = Permission(RoleNeed('adminRole'))
 
+
 #设置无权限处理器
 @app.errorhandler(PermissionDenied)
 def permissionDenied(error):
-    print '该操作('+request.url+')需要的访问权限为:'+str(error.args[0].needs)
+    print '该操作(' + request.url + ')需要的访问权限为:' + str(error.args[0].needs)
     #先记录来源地址
     session['redirected_from'] = request.url
     #如果用户已登录则显示无权限页面
     if session.get('identity.name'):
-        return '访问被拒绝!<br/>该问该页面('+request.url+')需要的权限是'+str(error.args[0].needs)+',目前用户拥有的权限是'+str(session.get('identity').provides)
+        return '访问被拒绝!<br/>该问该页面(' + request.url + ')需要的权限是' + str(error.args[0].needs) + ',目前用户拥有的权限是' + str(session.get('identity').provides)
     #如果用户还未登录则转向到登录面
     return redirect(url_for('login'))
+
 
 #权限绑定处理器,将登录过的赋予其对应的权限
 #将该操作与identity_loaded信号绑定,identity装载成功后即赋权
@@ -53,13 +56,15 @@ def permissionHandler(sender, identity):
     identity.provides.add(RoleNeed('loginUser'))
     #不同的用户赋予不同的权限
     if identity.name == 'admin':
-        print '赋予adminRole权限给'+identity.name
+        print '赋予adminRole权限给' + identity.name
         identity.provides.add(RoleNeed('adminRole'))
     if identity.name != 'admin':
-        print '赋予sayHi权限给'+identity.name
+        print '赋予sayHi权限给' + identity.name
         identity.provides.add(ActionNeed('sayHi'))
     else:
         pass
+
+
 @principal.identity_loader
 def loadIdentityFromSession():
     #每收到一次request请求便从会话中获取身份信息(如果有的话)
@@ -68,6 +73,7 @@ def loadIdentityFromSession():
     #identity.name和identity.auth_type来构造一个新的identity
     if 'identity' in session:
         return session.get('identity')
+
 
 @principal.identity_saver
 def saveIdentityToSession(identity):
@@ -79,10 +85,11 @@ def saveIdentityToSession(identity):
     session['identity.auth_type'] = identity.auth_type
     session['identity'] = identity
 
+
 @app.route('/')
 def index():
     if session.get('identity.name'):
-        str = 'welcome, '+session.get('identity.name')+', <a href="logout">log out</a><br/>'
+        str = 'welcome, ' + session.get('identity.name') + ', <a href="logout">log out</a><br/>'
     else:
         str = 'you are not login in--><a href="login">login </a><br/>'
     return Response('''
@@ -91,15 +98,14 @@ def index():
                     <head><title>flaskext-principal demo</title></head>
                     <body>
                         <center>
-                        '''
-                        + str +
-                        '''
+                        ''' + str + '''
                         <a href="sayHi">sayHi(for user who had "sayHi" permission)</a><br/>
                         <a href="datetime">datetime(for those who had login in)</a><br/>
                         <a href="admin">admin page(for those who had an "adminRole" permission)</a>
                     </body>
                     </html>
                     ''')
+
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -112,7 +118,7 @@ def login():
                         ''')
     else:
         username = request.form['username']
-        password = request.form['password']
+        #password = request.form['password']
         #用户认证
         #认证成功后发信号通知pincipal
         identity = Identity(username)
@@ -125,6 +131,7 @@ def login():
         #否则转向到首页
         return redirect(url_for('index'))
 
+
 @app.route('/logout')
 def logout():
     for key in ['identity', 'identity.name', 'identity.auth_type', 'directed_from']:
@@ -135,15 +142,18 @@ def logout():
     #登出后统一转向到首页
     return redirect(url_for('index'))
 
+
 @app.route('/sayHi')
 @sayHiPermission.require()
 def sayHi():
     return Response('you will see this page only if have a \'sayHi\' permission')
 
+
 @app.route('/datetime')
 @loginPermission.require()
 def currentDateTime():
-    return Response('only logined users could see me:'+str(datetime.datetime.now()))
+    return Response('only logined users could see me:' + str(datetime.datetime.now()))
+
 
 @app.route('/admin')
 @adminRolePermission.require()
@@ -154,4 +164,3 @@ if __name__ == '__main__':
     reload(sys)
     sys.setdefaultencoding('utf-8')
     app.run(debug=True)
-
