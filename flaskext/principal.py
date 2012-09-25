@@ -8,7 +8,7 @@
     :copyright: (c) 2010-2011 by Ali Afshar.
     :copyright: (c) 2011 by Alfred Hall.
     :license: MIT, see LICENSE for more details.
-    
+
     注释参考资料：
         1、stackoverflow.com[http://stackoverflow.com/questions/7050137/\
            flask-principal-tutorial-auth-authr]
@@ -29,7 +29,7 @@ signals = Namespace()
 
 
 identity_changed = signals.signal('identity-changed', doc=(
-"""Signal sent when the identity for a request has been changed.
+    """Signal sent when the identity for a request has been changed.
 
 Actual name: ``identity-changed``
 
@@ -51,7 +51,7 @@ For example::
 
 
 identity_loaded = signals.signal('identity-loaded', doc=(
-"""Signal sent when the identity has been initialised for a request.
+    """Signal sent when the identity has been initialised for a request.
 
 Actual name: ``identity-loaded``
 
@@ -122,10 +122,12 @@ reality, the developer is free to choose whatever convention the permissions
 are.
 """
 
+
 #该异常将在用户尝试做一个无权限的操作时抛出
 class PermissionDenied(RuntimeError):
     """Permission denied to the resource
     """
+
 
 #身份
 class Identity(object):
@@ -166,9 +168,10 @@ class Identity(object):
     def can(self, permission):
         """Whether the identity has access to the permission.
 
-        :param permission: The permission to test provision for.        
+        :param permission: The permission to test provision for.
         """
         return permission.allows(self)
+
 
 #匿名用户
 class AnonymousIdentity(Identity):
@@ -179,6 +182,7 @@ class AnonymousIdentity(Identity):
 
     def __init__(self):
         Identity.__init__(self, 'anon')
+
 
 #认证上下文管理器
 class IdentityContext(object):
@@ -233,7 +237,7 @@ class IdentityContext(object):
             if self.http_exception:
                 #且指明了无权限时要抛出的异常代码，则调用abort
                 abort(self.http_exception, self.permission)
-            #在未指明无权限时要抛出的异常代码的情况下，抛出PermissionDenied 
+            #在未指明无权限时要抛出的异常代码的情况下，抛出PermissionDenied
             raise PermissionDenied(self.permission)
 
     def __exit__(self, *exc):
@@ -343,8 +347,7 @@ class Permission(object):
 
         :param other: The other permission
         """
-        return self.needs.issubset(other.needs) and \
-               self.excludes.issubset(other.excludes)
+        return self.needs.issubset(other.needs) and self.excludes.issubset(other.excludes)
 
     def allows(self, identity):
         """Whether the identity can access this permission.
